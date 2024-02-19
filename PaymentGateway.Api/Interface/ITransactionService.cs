@@ -4,5 +4,5 @@ namespace PaymentGateway.Api.Interface;
 
 public interface ITransactionService
 {
-    Task<string> CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken);
+    Task<Guid> CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken);
 }

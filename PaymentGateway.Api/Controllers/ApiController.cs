@@ -28,7 +28,7 @@ namespace PaymentGateway.Api.Controllers
             {
                 Balance = 0,
                 TicketId = request.TicketId,
-                TransactionId = transactionId
+                TransactionId = transactionId.ToString()
             });
         }
     }
