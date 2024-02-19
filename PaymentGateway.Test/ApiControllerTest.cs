@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ReceivedExtensions;
 using PaymentGateway.Api.Controllers;
+using PaymentGateway.Api.Interface;
 using PaymentGateway.Api.Model;
 using PaymentGateway.Api.Service;
 using PaymentGateway.Entities;
@@ -64,5 +65,7 @@ namespace PaymentGateway.Test
 
             //response.Data.Balance.Should().Be(1000 - request.Amount);
         }
+
+        //TODO: add test case - transaction already exist before add it
     }
 }
