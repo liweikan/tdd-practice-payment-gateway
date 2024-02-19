@@ -2,17 +2,23 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using PaymentGateway.Api.Controllers;
+using PaymentGateway.Api.Interface;
 using PaymentGateway.Api.Model;
+using PaymentGateway.Api.Service;
 
 namespace PaymentGateway.Test
 {
     public class ApiControllerTest
     {
+        private readonly ILogger<TransactionService> _loggerTransactionService;
         private readonly ILogger<ApiController> _logger;
+        private readonly ITransactionService _transactionService;
 
         public ApiControllerTest()
         {
             _logger = Substitute.For<ILogger<ApiController>>();
+            _loggerTransactionService = Substitute.For<ILogger<TransactionService>>();
+            _transactionService = new TransactionService(_loggerTransactionService);
         }
 
         [Fact]
@@ -28,7 +34,7 @@ namespace PaymentGateway.Test
                 TokenId = Guid.NewGuid(),
                 BankCode = "MB"
             };
-            var controller = new ApiController(_logger);
+            var controller = new ApiController(_transactionService, _logger);
             var response = await controller.CreateTransactionAsync(
                 request,
                 CancellationToken.None);

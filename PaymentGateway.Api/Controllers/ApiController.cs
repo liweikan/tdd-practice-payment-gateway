@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PaymentGateway.Api.Interface;
 using PaymentGateway.Api.Model;
 
 namespace PaymentGateway.Api.Controllers
@@ -7,17 +8,21 @@ namespace PaymentGateway.Api.Controllers
     [Route("api")]
     public class ApiController : ControllerBase
     {
+        private readonly ITransactionService _transactionService;
         private readonly ILogger<ApiController> _logger;
 
-        public ApiController(ILogger<ApiController> logger)
+        public ApiController(
+            ITransactionService transactionService,
+            ILogger<ApiController> logger)
         {
+            _transactionService = transactionService;
             _logger = logger;
         }
 
         [HttpPost("transaction/create")]
         public async Task<ApiResponse<CreateTransactionResponse>> CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken = default)
         {
-            var transactionId = await CreateTicketAsync(request, cancellationToken);
+            var transactionId = await _transactionService.CreateTransactionAsync(request, cancellationToken);
 
             return new ApiResponse<CreateTransactionResponse>(Model.StatusCode.Success, new CreateTransactionResponse()
             {
@@ -25,11 +30,6 @@ namespace PaymentGateway.Api.Controllers
                 TicketId = request.TicketId,
                 TransactionId = transactionId
             });
-        }
-
-        private async Task<string> CreateTicketAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
-        {
-            return "TempTransactionId";
         }
     }
 }
