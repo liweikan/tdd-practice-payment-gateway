@@ -12,11 +12,5 @@ namespace PaymentGateway.Api.Controllers
         {
             _logger = logger;
         }
-
-        [HttpGet(Name = "test")]
-        public Task<string> TestAsync()
-        {
-            return Task.FromResult("Hello World");
-        }
     }
 }
