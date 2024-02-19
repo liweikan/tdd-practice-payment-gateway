@@ -2,6 +2,7 @@ using PaymentGateway.Api.Interface;
 using PaymentGateway.Api.Model;
 using PaymentGateway.Context.Interface;
 using PaymentGateway.Entities;
+using PaymentGateway.Entities.Enum;
 
 namespace PaymentGateway.Api.Service;
 
@@ -22,7 +23,24 @@ internal class TransactionService : ITransactionService
     {
         var now = DateTimeOffset.UtcNow;
         var transactionId = await _sqlAccessor.AddTransactionAsync(
-            default,
+            new Transaction
+            {
+
+                MerchantTransactionId = request.TicketId,
+                ProviderTransactionId = string.Empty,
+                Provider = Provider.EeziePay,
+                TokenId = request.TokenId,
+                Status = TransactionStatus.Pending,
+                Amount = request.Amount,
+                BankCode = request.BankCode,
+                PlayerId = request.PlayerCardNumber,
+                PlayerRealName = request.PlayerRealName,
+                PlayerCardNumber = request.PlayerCardNumber,
+                CreatedUser = request.PlayerId,
+                CreatedDate = now,
+                UpdatedUser = request.PlayerId,
+                UpdatedDate = now,
+            },
             cancellationToken);
 
         _logger.LogInformation($"Create transaction done, transactionId[{transactionId}]");
