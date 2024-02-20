@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using PaymentGateway.Api.Interface;
 using PaymentGateway.Api.Service;
 using PaymentGateway.Context;

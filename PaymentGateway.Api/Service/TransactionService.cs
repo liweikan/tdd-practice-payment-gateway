@@ -1,5 +1,9 @@
+using Microsoft.Extensions.Logging;
 using PaymentGateway.Api.Interface;
 using PaymentGateway.Api.Model;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PaymentGateway.Api.Service;
 
@@ -21,8 +25,7 @@ internal class TransactionService : ITransactionService
         //TODO: check transaction before add it
 
         var transactionId = await _sqlAccessor.AddTransactionAsync(request.BuildTransaction(DateTimeOffset.UtcNow), cancellationToken);
-
-        _logger.LogInformation($"Create transaction done, transactionId[{transactionId}]");
+        _logger.LogInformation($"create transaction done, transactionId[{transactionId}]");
 
         return transactionId;
     }

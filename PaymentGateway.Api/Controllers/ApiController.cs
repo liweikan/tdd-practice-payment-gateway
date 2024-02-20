@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using PaymentGateway.Api.Interface;
 using PaymentGateway.Api.Model;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PaymentGateway.Api.Controllers
 {

@@ -8,6 +8,9 @@ using PaymentGateway.Api.Model;
 using PaymentGateway.Api.Service;
 using PaymentGateway.Entities;
 using PaymentGateway.Entities.Enum;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PaymentGateway.Test
 {
@@ -28,6 +31,9 @@ namespace PaymentGateway.Test
         public async Task CreateTransaction_Test()
         {
             var transactionService = new TransactionService(_sqlAccessor, _loggerTransactionService);
+            var controller = new ApiController(transactionService, _logger);
+
+            var cancelToken = CancellationToken.None;
             var request = new CreateTransactionRequest
             {
                 TicketId = DateTimeOffset.UtcNow.Millisecond.ToString(),
@@ -38,8 +44,12 @@ namespace PaymentGateway.Test
                 TokenId = Guid.NewGuid(),
                 BankCode = "MB"
             };
-            var cancelToken = CancellationToken.None;
-            var controller = new ApiController(transactionService, _logger);
+            var transactionId = Guid.NewGuid();
+
+            _sqlAccessor
+                .AddTransactionAsync(Arg.Any<Transaction>(), Arg.Any<CancellationToken>())
+                .Returns(transactionId);
+
             var response = await controller.CreateTransactionAsync(request, cancelToken);
 
             await _sqlAccessor.Received().AddTransactionAsync(
@@ -57,11 +67,10 @@ namespace PaymentGateway.Test
                     a.CreatedUser == request.PlayerId &&
                     a.UpdatedUser == request.PlayerId),
                 Arg.Is(cancelToken));
-
             response.Status.Should().Be(StatusCode.Success);
             response.Data.Should().NotBeNull();
             response.Data.TicketId.Should().Be(request.TicketId);
-            response.Data.TransactionId.Should().NotBeNullOrWhiteSpace();
+            response.Data.TransactionId.Should().Be(transactionId.ToString());
 
             //response.Data.Balance.Should().Be(1000 - request.Amount);
         }
