@@ -22,9 +22,13 @@ internal class TransactionService : ITransactionService
 
     async Task<Guid> ITransactionService.CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
     {
-        //TODO: check transaction before add it
+        var transaction = await _sqlAccessor.GetTransactionAsync(request.TicketId, cancellationToken);
+        if (transaction != default)
+        {
+            return transaction.TransactionId;
+        }
 
-        var transactionId = await _sqlAccessor.AddTransactionAsync(request.BuildTransaction(DateTimeOffset.UtcNow), cancellationToken);
+        var transactionId = await _sqlAccessor.AddTransactionAsync(request.BuildTransaction(now: DateTimeOffset.UtcNow), cancellationToken);
         _logger.LogInformation($"create transaction done, transactionId[{transactionId}]");
 
         return transactionId;

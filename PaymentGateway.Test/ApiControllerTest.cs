@@ -50,6 +50,10 @@ namespace PaymentGateway.Test
                 .GetTransactionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(default(Transaction));
 
+            _sqlAccessor
+                .AddTransactionAsync(Arg.Any<Transaction>(), Arg.Any<CancellationToken>())
+                .Returns(transactionId);
+
             var response = await controller.CreateTransactionAsync(request, cancelToken);
 
             await _sqlAccessor.Received().AddTransactionAsync(
