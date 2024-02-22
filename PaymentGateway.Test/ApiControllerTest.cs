@@ -32,61 +32,36 @@ namespace PaymentGateway.Test
         {
             var transactionService = new TransactionService(_sqlAccessor, _loggerTransactionService);
             var controller = new ApiController(transactionService, _logger);
-
             var cancelToken = CancellationToken.None;
-            var request = new CreateTransactionRequest
-            {
-                TicketId = DateTimeOffset.UtcNow.Millisecond.ToString(),
-                PlayerId = "AS12345678",
-                PlayerRealName = "Willie",
-                PlayerCardNumber = "12387891237389094789",
-                Amount = 108,
-                TokenId = Guid.NewGuid(),
-                BankCode = "MB"
-            };
+            var request = CreateTransactionRequest();
             var transactionId = Guid.NewGuid();
 
-            _sqlAccessor
-                .GetTransactionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-                .Returns(default(Transaction));
-
-            _sqlAccessor
-                .AddTransactionAsync(Arg.Any<Transaction>(), Arg.Any<CancellationToken>())
-                .Returns(transactionId);
+            MockGetTransactionReturnNull();
+            MockAddTransactionSuccess(transactionId);
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
 
-            await _sqlAccessor.Received().AddTransactionAsync(
-                Arg.Is<Transaction>(a =>
-                    a.MerchantTransactionId == request.TicketId &&
-                    a.ProviderTransactionId == string.Empty &&
-                    a.Provider == Provider.EeziePay &&
-                    a.TokenId == request.TokenId &&
-                    a.Status == TransactionStatus.Pending &&
-                    a.Amount == request.Amount &&
-                    a.BankCode == request.BankCode &&
-                    a.PlayerId == request.PlayerCardNumber &&
-                    a.PlayerRealName == request.PlayerRealName &&
-                    a.PlayerCardNumber == request.PlayerCardNumber &&
-                    a.CreatedUser == request.PlayerId &&
-                    a.UpdatedUser == request.PlayerId),
-                Arg.Is(cancelToken));
-            response.Status.Should().Be(StatusCode.Success);
-            response.Data.Should().NotBeNull();
-            response.Data.TicketId.Should().Be(request.TicketId);
-            response.Data.TransactionId.Should().Be(transactionId.ToString());
-
-            //response.Data.Balance.Should().Be(1000 - request.Amount);
+            await AssertReceivedParametersAsync(request, cancelToken);
+            AssertResponse(response, request, transactionId);
         }
 
-        //TODO: add test case - transaction already exist before add it
         [Fact]
         public async Task CreateDuplicatedTransaction_Test()
         {
             var transactionService = new TransactionService(_sqlAccessor, _loggerTransactionService);
             var controller = new ApiController(transactionService, _logger);
-
             var cancelToken = CancellationToken.None;
+            var request = CreateTransactionRequest();
+            var transactionId = Guid.NewGuid();
+
+            MockGetTransactionByRequest(transactionId, request);
+
+            var response = await controller.CreateTransactionAsync(request, cancelToken);
+            AssertResponse(response, request, transactionId);
+        }
+
+        private static CreateTransactionRequest CreateTransactionRequest()
+        {
             var request = new CreateTransactionRequest
             {
                 TicketId = DateTimeOffset.UtcNow.Millisecond.ToString(),
@@ -97,7 +72,25 @@ namespace PaymentGateway.Test
                 TokenId = Guid.NewGuid(),
                 BankCode = "MB"
             };
-            var transactionId = Guid.NewGuid();
+            return request;
+        }
+
+        private void MockAddTransactionSuccess(Guid transactionId)
+        {
+            _sqlAccessor
+                .AddTransactionAsync(Arg.Any<Transaction>(), Arg.Any<CancellationToken>())
+                .Returns(transactionId);
+        }
+
+        private void MockGetTransactionReturnNull()
+        {
+            _sqlAccessor
+                .GetTransactionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                .Returns(default(Transaction));
+        }
+
+        private void MockGetTransactionByRequest(Guid transactionId, CreateTransactionRequest request)
+        {
             var createDate = DateTimeOffset.UtcNow.AddHours(-1);
 
             _sqlAccessor
@@ -120,13 +113,33 @@ namespace PaymentGateway.Test
                     CreatedDate = createDate,
                     UpdatedDate = createDate
                 });
+        }
 
-            var response = await controller.CreateTransactionAsync(request, cancelToken);
+        private async Task AssertReceivedParametersAsync(CreateTransactionRequest request, CancellationToken cancelToken)
+        {
+            await _sqlAccessor.Received().AddTransactionAsync(
+                Arg.Is<Transaction>(a =>
+                    a.MerchantTransactionId == request.TicketId &&
+                    a.ProviderTransactionId == string.Empty &&
+                    a.Provider == Provider.EeziePay &&
+                    a.TokenId == request.TokenId &&
+                    a.Status == TransactionStatus.Pending &&
+                    a.Amount == request.Amount &&
+                    a.BankCode == request.BankCode &&
+                    a.PlayerId == request.PlayerCardNumber &&
+                    a.PlayerRealName == request.PlayerRealName &&
+                    a.PlayerCardNumber == request.PlayerCardNumber &&
+                    a.CreatedUser == request.PlayerId &&
+                    a.UpdatedUser == request.PlayerId),
+                Arg.Is(cancelToken));
+        }
+
+        private static void AssertResponse(ApiResponse<CreateTransactionResponse> response, CreateTransactionRequest request, Guid transactionId)
+        {
             response.Status.Should().Be(StatusCode.Success);
             response.Data.Should().NotBeNull();
             response.Data.TicketId.Should().Be(request.TicketId);
             response.Data.TransactionId.Should().Be(transactionId.ToString());
-
             //response.Data.Balance.Should().Be(1000 - request.Amount);
         }
     }
