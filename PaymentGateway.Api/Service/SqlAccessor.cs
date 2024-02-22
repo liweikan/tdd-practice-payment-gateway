@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Api.Interface;
 using PaymentGateway.Context.Interface;
@@ -25,5 +26,12 @@ internal class SqlAccessor : ISqlAccessor
         await db.SaveChangesAsync(cancellationToken);
 
         return transaction.TransactionId;
+    }
+
+    async Task<Transaction> ISqlAccessor.GetTransactionAsync(string ticketId, CancellationToken cancellationToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetService<IPaymentGatewayContext>();
+        return await db.Transactions.FirstOrDefaultAsync(t => t.MerchantTransactionId == ticketId, cancellationToken);
     }
 }

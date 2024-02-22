@@ -8,4 +8,5 @@ namespace PaymentGateway.Api.Interface;
 public interface ISqlAccessor
 {
     Task<Guid> AddTransactionAsync(Transaction transaction, CancellationToken cancellationToken);
+    Task<Transaction> GetTransactionAsync(string ticketId, CancellationToken cancellationToken);
 }

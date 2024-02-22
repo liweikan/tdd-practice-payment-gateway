@@ -47,8 +47,8 @@ namespace PaymentGateway.Test
             var transactionId = Guid.NewGuid();
 
             _sqlAccessor
-                .AddTransactionAsync(Arg.Any<Transaction>(), Arg.Any<CancellationToken>())
-                .Returns(transactionId);
+                .GetTransactionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                .Returns(default(Transaction));
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
 
@@ -76,5 +76,54 @@ namespace PaymentGateway.Test
         }
 
         //TODO: add test case - transaction already exist before add it
+        [Fact]
+        public async Task CreateDuplicatedTransaction_Test()
+        {
+            var transactionService = new TransactionService(_sqlAccessor, _loggerTransactionService);
+            var controller = new ApiController(transactionService, _logger);
+
+            var cancelToken = CancellationToken.None;
+            var request = new CreateTransactionRequest
+            {
+                TicketId = DateTimeOffset.UtcNow.Millisecond.ToString(),
+                PlayerId = "AS12345678",
+                PlayerRealName = "Willie",
+                PlayerCardNumber = "12387891237389094789",
+                Amount = 108,
+                TokenId = Guid.NewGuid(),
+                BankCode = "MB"
+            };
+            var transactionId = Guid.NewGuid();
+            var createDate = DateTimeOffset.UtcNow.AddHours(-1);
+
+            _sqlAccessor
+                .GetTransactionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                .Returns(new Transaction
+                {
+                    TransactionId = transactionId,
+                    MerchantTransactionId = request.TicketId,
+                    ProviderTransactionId = string.Empty,
+                    Provider = Provider.EeziePay,
+                    TokenId = request.TokenId,
+                    Status = TransactionStatus.Pending,
+                    Amount = request.Amount,
+                    BankCode = request.BankCode,
+                    PlayerId = request.PlayerCardNumber,
+                    PlayerRealName = request.PlayerRealName,
+                    PlayerCardNumber = request.PlayerCardNumber,
+                    CreatedUser = request.PlayerId,
+                    UpdatedUser = request.PlayerId,
+                    CreatedDate = createDate,
+                    UpdatedDate = createDate
+                });
+
+            var response = await controller.CreateTransactionAsync(request, cancelToken);
+            response.Status.Should().Be(StatusCode.Success);
+            response.Data.Should().NotBeNull();
+            response.Data.TicketId.Should().Be(request.TicketId);
+            response.Data.TransactionId.Should().Be(transactionId.ToString());
+
+            //response.Data.Balance.Should().Be(1000 - request.Amount);
+        }
     }
 }
