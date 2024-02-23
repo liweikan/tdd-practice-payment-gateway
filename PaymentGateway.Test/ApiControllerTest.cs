@@ -40,7 +40,7 @@ namespace PaymentGateway.Test
             {
                 PlayerId = request.PlayerId,
                 CashLogId = Guid.NewGuid(),
-                ExternalTransactionId = transactionId,
+                ExternalTransactionId = transactionId.ToString(),
                 Balance = 892
             };
 
@@ -63,11 +63,19 @@ namespace PaymentGateway.Test
             var cancelToken = CancellationToken.None;
             var request = CreateTransactionRequest();
             var transactionId = Guid.NewGuid();
+            var balanceUpdateResponse = new BalanceUpdateResponseDto
+            {
+                PlayerId = request.PlayerId,
+                CashLogId = Guid.NewGuid(),
+                ExternalTransactionId = transactionId.ToString(),
+                Balance = 892
+            };
 
             MockGetTransactionByRequest(transactionId, request);
+            MockUpdateWalletBalance(transactionId, request, balanceUpdateResponse, cancelToken);
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
-            AssertResponse(response, request, transactionId, 0);
+            AssertResponse(response, request, transactionId, balanceUpdateResponse.Balance);
         }
 
         private static CreateTransactionRequest CreateTransactionRequest()
@@ -127,13 +135,12 @@ namespace PaymentGateway.Test
                 });
         }
 
-        private void MockUpdateWalletBalance(Guid transactionId, CreateTransactionRequest request, BalanceUpdateResponseDto balanceUpdateResponse,
-            CancellationToken cancelToken)
+        private void MockUpdateWalletBalance(Guid transactionId, CreateTransactionRequest request, BalanceUpdateResponseDto balanceUpdateResponse, CancellationToken cancelToken)
         {
             _sqlAccessor
                 .WalletBalanceUpdateAsync(
                     Arg.Is<BalanceUpdateDto>(dto =>
-                        dto.ExternalTransactionId == transactionId &&
+                        dto.ExternalTransactionId == transactionId.ToString() &&
                         dto.Type == request.Type &&
                         dto.Amount == request.Amount),
                     Arg.Is(cancelToken))
@@ -164,7 +171,7 @@ namespace PaymentGateway.Test
         {
             await _sqlAccessor.Received().WalletBalanceUpdateAsync(
                 Arg.Is<BalanceUpdateDto>(dto =>
-                    dto.ExternalTransactionId == transactionId &&
+                    dto.ExternalTransactionId == transactionId.ToString() &&
                     dto.Type == request.Type &&
                     dto.Amount == request.Amount),
                 Arg.Is(cancelToken));

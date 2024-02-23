@@ -25,14 +25,9 @@ namespace PaymentGateway.Api.Controllers
         [HttpPost("transaction/create")]
         public async Task<ApiResponse<CreateTransactionResponse>> CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken = default)
         {
-            var transactionId = await _transactionService.CreateTransactionAsync(request, cancellationToken);
+            var response = await _transactionService.CreateTransactionAsync(request, cancellationToken);
 
-            return new ApiResponse<CreateTransactionResponse>(Model.StatusCode.Success, new CreateTransactionResponse()
-            {
-                Balance = 0,
-                TicketId = request.TicketId,
-                TransactionId = transactionId.ToString()
-            });
+            return new ApiResponse<CreateTransactionResponse>(Model.StatusCode.Success, response);
         }
     }
 }

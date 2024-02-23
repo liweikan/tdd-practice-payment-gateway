@@ -10,5 +10,5 @@ public interface ISqlAccessor
 {
     Task<Guid> AddTransactionAsync(Transaction transaction, CancellationToken cancellationToken);
     Task<Transaction> GetTransactionAsync(string ticketId, CancellationToken cancellationToken);
-    Task<BalanceUpdateResponseDto> WalletBalanceUpdateAsync(BalanceUpdateDto balanceUpdateDto, CancellationToken cancelToken);
+    Task<BalanceUpdateResponseDto> WalletBalanceUpdateAsync(BalanceUpdateDto dto, CancellationToken cancelToken);
 }

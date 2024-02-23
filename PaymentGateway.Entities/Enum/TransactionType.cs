@@ -1,6 +1,6 @@
 namespace PaymentGateway.Entities.Enum;
 
-public enum TransactionType
+public enum TransactionType : short
 {
     Deposit = 1,
     Withdraw = 2,

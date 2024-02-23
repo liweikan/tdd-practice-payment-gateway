@@ -6,7 +6,7 @@ namespace PaymentGateway.Api.Model
     {
         public string PlayerId { get; set; }
         public Guid CashLogId { get; set; }
-        public Guid ExternalTransactionId { get; set; }
-        public int Balance { get; set; }
+        public string ExternalTransactionId { get; set; }
+        public decimal Balance { get; set; }
     }
 }

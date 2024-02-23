@@ -1,5 +1,5 @@
-using Higgs.Data.Common.Context.Postgresql.Configurations;
-using Higgs.Data.Common.Context.Postgresql.Extensions;
+//using Higgs.Data.Common.Context.Postgresql.Configurations;
+//using Higgs.Data.Common.Context.Postgresql.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PaymentGateway.Entities;
@@ -16,83 +16,81 @@ namespace PaymentGateway.Context.Configurations
 
             builder
                 .Property(a => a.TransactionId)
-                .HasColumnType(SqlDbTypes.Uuid)
+                .HasColumnType("uuid")
                 .IsRequired()
-                .HasGuidDefaultValueSql();
-
+                .HasDefaultValueSql("'00000000-0000-0000-0000-000000000000'");
 
             builder
                 .Property(a => a.MerchantTransactionId)
-                .HasColumnType(SqlDbTypes.Varchar(36))
+                .HasColumnType("varchar(64)")
                 .IsRequired();
 
             builder
                 .Property(a => a.ProviderTransactionId)
-                .HasColumnType(SqlDbTypes.Varchar(36))
+                .HasColumnType("varchar(64)")
                 .IsRequired();
 
             builder
                 .Property(a => a.Provider)
-                .HasColumnType(SqlDbTypes.Smallint)
+                .HasColumnType("smallint")
                 .IsRequired();
 
             builder
                 .Property(a => a.TokenId)
-                .HasColumnType(SqlDbTypes.Uuid)
+                .HasColumnType("uuid")
                 .IsRequired();
 
 
             builder
                 .Property(a => a.Status)
-                .HasColumnType(SqlDbTypes.Smallint)
+                .HasColumnType("smallint")
                 .IsRequired();
-
 
             builder
                 .Property(a => a.Amount)
-                .HasColumnType(SqlDbTypes.Amount)
+                .HasColumnType("decimal(19,4)")
                 .IsRequired();
 
             builder
                 .Property(a => a.BankCode)
-                .HasColumnType(SqlDbTypes.Varchar(10))
+                .HasColumnType("varchar(10)")
                 .IsRequired();
 
             builder
                 .Property(a => a.PlayerId)
-                .HasColumnType(SqlDbTypes.Varchar(64))
+                .HasColumnType("varchar(32)")
                 .IsRequired();
 
             builder
                 .Property(a => a.PlayerRealName)
-                .HasColumnType(SqlDbTypes.Varchar(64))
+                .HasColumnType("varchar(64)")
                 .IsRequired();
 
             builder
                 .Property(a => a.PlayerCardNumber)
-                .HasColumnType(SqlDbTypes.Varchar(50))
+                .HasColumnType("varchar(50)")
                 .IsRequired();
 
             builder
                 .Property(a => a.CreatedUser)
-                .HasColumnType(SqlDbTypes.Varchar(20))
+                .HasColumnType("varchar(20)")
                 .IsRequired();
 
             builder
                 .Property(a => a.UpdatedUser)
-                .HasColumnType(SqlDbTypes.Varchar(20))
+                .HasColumnType("varchar(20)")
                 .IsRequired();
 
             builder
                 .Property(a => a.CreatedDate)
-                .HasColumnType(SqlDbTypes.Timestamp_with_timezone)
-                .HasDateTimeOffsetDefaultValueSql()
+                .HasColumnType("timestamp with time zone")
+                .HasDefaultValueSql("current_timestamp")
                 .IsRequired();
 
             builder
                 .Property(a => a.UpdatedDate)
-                .HasColumnType(SqlDbTypes.Timestamp_with_timezone)
-                .HasDateTimeOffsetDefaultValueSql()
+                .HasColumnType("timestamp with time zone")
+                .HasDefaultValueSql("current_timestamp")
                 .IsRequired();
         }
     }
