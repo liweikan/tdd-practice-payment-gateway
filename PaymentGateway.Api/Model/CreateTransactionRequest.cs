@@ -10,6 +10,7 @@ public class CreateTransactionRequest
     public string PlayerId { get; set; }
     public string PlayerRealName { get; set; }
     public string PlayerCardNumber { get; set; }
+    public TransactionType Type { get; set; }
     public decimal Amount { get; set; }
     public Guid TokenId { get; set; }
     public string BankCode { get; set; }
@@ -22,6 +23,7 @@ public class CreateTransactionRequest
             ProviderTransactionId = string.Empty,
             Provider = Provider.EeziePay,
             TokenId = TokenId,
+            Type = Type,
             Status = TransactionStatus.Pending,
             Amount = Amount,
             BankCode = BankCode,

@@ -10,6 +10,7 @@ namespace PaymentGateway.Entities
         public string ProviderTransactionId { get; set; }
         public Provider Provider { get; set; }
         public Guid TokenId { get; set; }
+        public TransactionType Type { get; set; }
         public TransactionStatus Status { get; set; }
         public decimal Amount { get; set; }
         public string BankCode { get; set; }

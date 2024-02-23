@@ -11,6 +11,7 @@ using PaymentGateway.Entities.Enum;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using TransactionType = PaymentGateway.Entities.Enum.TransactionType;
 
 namespace PaymentGateway.Test
 {
@@ -35,14 +36,23 @@ namespace PaymentGateway.Test
             var cancelToken = CancellationToken.None;
             var request = CreateTransactionRequest();
             var transactionId = Guid.NewGuid();
+            var balanceUpdateResponse = new BalanceUpdateResponseDto
+            {
+                PlayerId = request.PlayerId,
+                CashLogId = Guid.NewGuid(),
+                ExternalTransactionId = transactionId,
+                Balance = 892
+            };
 
             MockGetTransactionReturnNull();
             MockAddTransactionSuccess(transactionId);
+            MockUpdateWalletBalance(transactionId, request, balanceUpdateResponse, cancelToken);
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
 
-            await AssertReceivedParametersAsync(request, cancelToken);
-            AssertResponse(response, request, transactionId);
+            await AssertReceivedCreateRequestAsync(request, cancelToken);
+            await AssertReceivedWalletBalanceUpdateAsync(transactionId, request, cancelToken);
+            AssertResponse(response, request, transactionId, balanceUpdateResponse.Balance);
         }
 
         [Fact]
@@ -57,7 +67,7 @@ namespace PaymentGateway.Test
             MockGetTransactionByRequest(transactionId, request);
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
-            AssertResponse(response, request, transactionId);
+            AssertResponse(response, request, transactionId, 0);
         }
 
         private static CreateTransactionRequest CreateTransactionRequest()
@@ -69,6 +79,7 @@ namespace PaymentGateway.Test
                 PlayerRealName = "Willie",
                 PlayerCardNumber = "12387891237389094789",
                 Amount = 108,
+                Type = TransactionType.Withdraw,
                 TokenId = Guid.NewGuid(),
                 BankCode = "MB"
             };
@@ -102,6 +113,7 @@ namespace PaymentGateway.Test
                     ProviderTransactionId = string.Empty,
                     Provider = Provider.EeziePay,
                     TokenId = request.TokenId,
+                    Type = request.Type,
                     Status = TransactionStatus.Pending,
                     Amount = request.Amount,
                     BankCode = request.BankCode,
@@ -115,7 +127,20 @@ namespace PaymentGateway.Test
                 });
         }
 
-        private async Task AssertReceivedParametersAsync(CreateTransactionRequest request, CancellationToken cancelToken)
+        private void MockUpdateWalletBalance(Guid transactionId, CreateTransactionRequest request, BalanceUpdateResponseDto balanceUpdateResponse,
+            CancellationToken cancelToken)
+        {
+            _sqlAccessor
+                .WalletBalanceUpdateAsync(
+                    Arg.Is<BalanceUpdateDto>(dto =>
+                        dto.ExternalTransactionId == transactionId &&
+                        dto.Type == request.Type &&
+                        dto.Amount == request.Amount),
+                    Arg.Is(cancelToken))
+                .Returns(Task.FromResult(balanceUpdateResponse));
+        }
+
+        private async Task AssertReceivedCreateRequestAsync(CreateTransactionRequest request, CancellationToken cancelToken)
         {
             await _sqlAccessor.Received().AddTransactionAsync(
                 Arg.Is<Transaction>(a =>
@@ -123,6 +148,7 @@ namespace PaymentGateway.Test
                     a.ProviderTransactionId == string.Empty &&
                     a.Provider == Provider.EeziePay &&
                     a.TokenId == request.TokenId &&
+                    a.Type == request.Type &&
                     a.Status == TransactionStatus.Pending &&
                     a.Amount == request.Amount &&
                     a.BankCode == request.BankCode &&
@@ -134,13 +160,23 @@ namespace PaymentGateway.Test
                 Arg.Is(cancelToken));
         }
 
-        private static void AssertResponse(ApiResponse<CreateTransactionResponse> response, CreateTransactionRequest request, Guid transactionId)
+        private async Task AssertReceivedWalletBalanceUpdateAsync(Guid transactionId, CreateTransactionRequest request, CancellationToken cancelToken)
+        {
+            await _sqlAccessor.Received().WalletBalanceUpdateAsync(
+                Arg.Is<BalanceUpdateDto>(dto =>
+                    dto.ExternalTransactionId == transactionId &&
+                    dto.Type == request.Type &&
+                    dto.Amount == request.Amount),
+                Arg.Is(cancelToken));
+        }
+
+        private static void AssertResponse(ApiResponse<CreateTransactionResponse> response, CreateTransactionRequest request, Guid transactionId, decimal balance)
         {
             response.Status.Should().Be(StatusCode.Success);
             response.Data.Should().NotBeNull();
             response.Data.TicketId.Should().Be(request.TicketId);
             response.Data.TransactionId.Should().Be(transactionId.ToString());
-            //response.Data.Balance.Should().Be(1000 - request.Amount);
+            response.Data.Balance.Should().Be(balance);
         }
     }
 }
