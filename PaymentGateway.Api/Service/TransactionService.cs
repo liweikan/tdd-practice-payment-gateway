@@ -22,6 +22,19 @@ internal class TransactionService : ITransactionService
 
     async Task<CreateTransactionResponse> ITransactionService.CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
     {
+        var transactionId = await CreateTransactionAsync(request, cancellationToken);
+        var response = await UpdateWalletAsync(request, transactionId, cancellationToken);
+
+        return new CreateTransactionResponse
+        {
+            TransactionId = transactionId,
+            TicketId = request.TicketId,
+            Balance = response.Balance
+        };
+    }
+
+    private async Task<Guid> CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
+    {
         Guid transactionId;
         var transaction = await _sqlAccessor.GetTransactionAsync(request.TicketId, cancellationToken);
         if (transaction == default)
@@ -34,13 +47,7 @@ internal class TransactionService : ITransactionService
             transactionId = transaction.TransactionId;
         }
 
-        var response = await UpdateWalletAsync(request, transactionId, cancellationToken);
-        return new CreateTransactionResponse
-        {
-            TransactionId = transactionId,
-            TicketId = request.TicketId,
-            Balance = response.Balance
-        };
+        return transactionId;
     }
 
     private async Task<BalanceUpdateResponseDto> UpdateWalletAsync(CreateTransactionRequest request, Guid transactionId, CancellationToken cancellationToken)

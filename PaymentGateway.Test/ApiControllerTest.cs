@@ -36,13 +36,7 @@ namespace PaymentGateway.Test
             var cancelToken = CancellationToken.None;
             var request = CreateTransactionRequest();
             var transactionId = Guid.NewGuid();
-            var balanceUpdateResponse = new BalanceUpdateResponseDto
-            {
-                PlayerId = request.PlayerId,
-                CashLogId = Guid.NewGuid(),
-                ExternalTransactionId = transactionId.ToString(),
-                Balance = 892
-            };
+            var balanceUpdateResponse = CreateBalanceUpdateResponseDto(request, transactionId);
 
             MockGetTransactionReturnNull();
             MockAddTransactionSuccess(transactionId);
@@ -63,18 +57,13 @@ namespace PaymentGateway.Test
             var cancelToken = CancellationToken.None;
             var request = CreateTransactionRequest();
             var transactionId = Guid.NewGuid();
-            var balanceUpdateResponse = new BalanceUpdateResponseDto
-            {
-                PlayerId = request.PlayerId,
-                CashLogId = Guid.NewGuid(),
-                ExternalTransactionId = transactionId.ToString(),
-                Balance = 892
-            };
+            var balanceUpdateResponse = CreateBalanceUpdateResponseDto(request, transactionId);
 
             MockGetTransactionByRequest(transactionId, request);
             MockUpdateWalletBalance(transactionId, request, balanceUpdateResponse, cancelToken);
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
+
             AssertResponse(response, request, transactionId, balanceUpdateResponse.Balance);
         }
 
@@ -92,6 +81,19 @@ namespace PaymentGateway.Test
                 BankCode = "MB"
             };
             return request;
+        }
+
+        private static BalanceUpdateResponseDto CreateBalanceUpdateResponseDto(CreateTransactionRequest request,
+            Guid transactionId)
+        {
+            var balanceUpdateResponse = new BalanceUpdateResponseDto
+            {
+                PlayerId = request.PlayerId,
+                CashLogId = Guid.NewGuid(),
+                ExternalTransactionId = transactionId.ToString(),
+                Balance = 892
+            };
+            return balanceUpdateResponse;
         }
 
         private void MockAddTransactionSuccess(Guid transactionId)
