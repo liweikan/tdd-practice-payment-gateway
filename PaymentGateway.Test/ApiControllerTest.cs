@@ -40,9 +40,7 @@ namespace PaymentGateway.Test
 
             MockGetTransactionReturnNull();
             MockAddTransactionSuccess(transactionId);
-            _sqlAccessor
-                .GetCashLogAsync(request.Type, transactionId.ToString(), request.PlayerId, cancelToken)
-                .Returns(Task.FromResult(default(PlayerCashLog)));
+            MockGetCashLogNull(request, transactionId);
             MockUpdateWalletBalance(transactionId, request, balanceUpdateResponse, cancelToken);
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
@@ -63,19 +61,7 @@ namespace PaymentGateway.Test
             var balanceUpdateResponse = CreateBalanceUpdateResponseDto(request, transactionId);
 
             MockGetTransactionByRequest(transactionId, request);
-            _sqlAccessor
-                .GetCashLogAsync(request.Type, transactionId.ToString(), request.PlayerId, cancelToken)
-                .Returns(Task.FromResult(new PlayerCashLog
-                {
-                    ExternalTransactionId = transactionId.ToString(),
-                    TransactionType = request.Type,
-                    CreatedDate = DateTimeOffset.UtcNow.AddHours(-1),
-                    Amount = request.Amount,
-                    PlayerCashLogId = balanceUpdateResponse.CashLogId,
-                    PlayerId = request.PlayerId,
-                    PostBalance = balanceUpdateResponse.Balance,
-                    CurrentBalance = balanceUpdateResponse.Balance + request.Amount
-                }));
+            MockGetCashLogExist(request, transactionId, balanceUpdateResponse);
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
 
@@ -150,6 +136,30 @@ namespace PaymentGateway.Test
                     CreatedDate = createDate,
                     UpdatedDate = createDate
                 });
+        }
+
+        private void MockGetCashLogNull(CreateTransactionRequest request, Guid transactionId)
+        {
+            _sqlAccessor
+                .GetCashLogAsync(request.Type, transactionId.ToString(), request.PlayerId, Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(default(PlayerCashLog)));
+        }
+
+        private void MockGetCashLogExist(CreateTransactionRequest request, Guid transactionId, BalanceUpdateResponseDto balanceUpdateResponse)
+        {
+            _sqlAccessor
+                .GetCashLogAsync(request.Type, transactionId.ToString(), request.PlayerId, Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(new PlayerCashLog
+                {
+                    ExternalTransactionId = transactionId.ToString(),
+                    TransactionType = request.Type,
+                    CreatedDate = DateTimeOffset.UtcNow.AddHours(-1),
+                    Amount = request.Amount,
+                    PlayerCashLogId = balanceUpdateResponse.CashLogId,
+                    PlayerId = request.PlayerId,
+                    PostBalance = balanceUpdateResponse.Balance,
+                    CurrentBalance = balanceUpdateResponse.Balance + request.Amount
+                }));
         }
 
         private void MockUpdateWalletBalance(Guid transactionId, CreateTransactionRequest request, BalanceUpdateResponseDto balanceUpdateResponse, CancellationToken cancelToken)
