@@ -10,7 +10,7 @@ namespace PaymentGateway.Api.Interface;
 public interface ISqlAccessor
 {
     Task<Guid> AddTransactionAsync(Transaction transaction, CancellationToken cancellationToken);
-    Task<PlayerCashLog> GetCashLogAsync(TransactionType type, string ticketId, string playerId);
+    Task<PlayerCashLog> GetCashLogAsync(TransactionType type, string transactionId, string playerId, CancellationToken cancellationToken);
     Task<Transaction> GetTransactionAsync(string ticketId, CancellationToken cancellationToken);
     Task<BalanceUpdateResponseDto> WalletBalanceUpdateAsync(BalanceUpdateDto dto, CancellationToken cancelToken);
 }

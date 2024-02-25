@@ -4,6 +4,7 @@ using PaymentGateway.Api.Interface;
 using PaymentGateway.Api.Model;
 using PaymentGateway.Context.Interface;
 using PaymentGateway.Entities;
+using PaymentGateway.Entities.Enum;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +35,17 @@ internal class SqlAccessor : ISqlAccessor
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetService<IPaymentGatewayContext>();
         return await db.Transactions.FirstOrDefaultAsync(t => t.MerchantTransactionId == ticketId, cancellationToken);
+    }
+
+    async Task<PlayerCashLog> ISqlAccessor.GetCashLogAsync(TransactionType type, string transactionId, string playerId, CancellationToken cancellationToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetService<IPaymentGatewayContext>();
+        return await db.PlayerCashLogs.FirstOrDefaultAsync(log =>
+                log.ExternalTransactionId == transactionId &&
+                log.TransactionType == type &&
+                log.PlayerId == playerId,
+            cancellationToken);
     }
 
     async Task<BalanceUpdateResponseDto> ISqlAccessor.WalletBalanceUpdateAsync(BalanceUpdateDto dto, CancellationToken cancelToken)

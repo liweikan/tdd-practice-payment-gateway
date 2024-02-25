@@ -27,7 +27,7 @@ internal class TransactionService : ITransactionService
 
         return new CreateTransactionResponse
         {
-            TransactionId = transactionId,
+            TransactionId = response.ExternalTransactionId,
             TicketId = request.TicketId,
             Balance = response.Balance
         };
@@ -52,6 +52,18 @@ internal class TransactionService : ITransactionService
 
     private async Task<BalanceUpdateResponseDto> UpdateWalletAsync(CreateTransactionRequest request, Guid transactionId, CancellationToken cancellationToken)
     {
+        var cashLog = await _sqlAccessor.GetCashLogAsync(request.Type, transactionId.ToString(), request.PlayerId, cancellationToken);
+        if (cashLog != default)
+        {
+            return new BalanceUpdateResponseDto
+            {
+                ExternalTransactionId = cashLog.ExternalTransactionId,
+                PlayerId = request.PlayerId,
+                CashLogId = cashLog.PlayerCashLogId,
+                Balance = cashLog.PostBalance,
+            };
+        }
+
         var response = await _sqlAccessor.WalletBalanceUpdateAsync(
             new BalanceUpdateDto
             {
