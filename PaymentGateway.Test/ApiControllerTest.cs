@@ -40,6 +40,9 @@ namespace PaymentGateway.Test
 
             MockGetTransactionReturnNull();
             MockAddTransactionSuccess(transactionId);
+            _sqlAccessor
+                .GetCashLogAsync(request.Type, request.TicketId, request.PlayerId)
+                .Returns(Task.FromResult(default(PlayerCashLog)));
             MockUpdateWalletBalance(transactionId, request, balanceUpdateResponse, cancelToken);
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
@@ -60,6 +63,19 @@ namespace PaymentGateway.Test
             var balanceUpdateResponse = CreateBalanceUpdateResponseDto(request, transactionId);
 
             MockGetTransactionByRequest(transactionId, request);
+            _sqlAccessor
+                .GetCashLogAsync(request.Type, request.TicketId, request.PlayerId)
+                .Returns(Task.FromResult(new PlayerCashLog
+                {
+                    ExternalTransactionId = request.TicketId,
+                    TransactionType = request.Type,
+                    CreatedDate = DateTimeOffset.UtcNow.AddHours(-1),
+                    Amount = request.Amount,
+                    PlayerCashLogId = balanceUpdateResponse.CashLogId,
+                    PlayerId = request.PlayerId,
+                    PostBalance = balanceUpdateResponse.Balance,
+                    CurrentBalance = balanceUpdateResponse.Balance + request.Amount
+                }));
             MockUpdateWalletBalance(transactionId, request, balanceUpdateResponse, cancelToken);
 
             var response = await controller.CreateTransactionAsync(request, cancelToken);
